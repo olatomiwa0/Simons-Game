@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        .circle
+        {
+            margin-top: 300px;
+            margin-left: 760px;
+            width: 400px;
+            height: 400px;
+            background-color: black;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #redbutton
+        {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: rgb(83, 0, 0);
+            box-shadow: 0px 0px 0px 10px black;
+            display: inline-block;
+            cursor: pointer;
+            position: absolute;
+            top: 200px;
+            left: 625px;
+        }
+        #yellowbutton
+        {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: goldenrod;
+            box-shadow: 0px 0px 0px 10px black;
+            display: inline-block;
+            cursor: pointer;
+            position: absolute;
+            top: 550px;
+            left: 625px;
+        }
+        #greenbutton
+        {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: darkgreen;
+            box-shadow: 0px 0px 0px 10px black;
+            display: inline-block;
+            cursor: pointer;
+            position: absolute;
+            top: 200px;
+            left: 1050px;
+        }
+        #bluebutton
+        {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: darkblue;
+            box-shadow: 0px 0px 0px 10px black;
+            display: inline-block;
+            cursor: pointer;
+            position: absolute;
+            top: 550px;
+            left: 1050px;
+        }
+        #startbutton
+        {
+            height: 50px;
+            width: 100px;
+            background-color: rgb(201, 201, 201);
+            display: inline-block;
+            border-radius: 15px;
+            font-size: 35px;
+            font-family: Orbitron;
+            color: black;
+            cursor: pointer;
+            border: 5px solid;
+            text-align: center;
+        }
+        #leftscorecounter
+        {
+            height: 50px;
+            width: 100px;
+            background-color: rgb(201, 201, 201);
+            display: inline-block;
+            border-radius: 15px;
+            font-size: 40px;
+            font-family: Orbitron;
+            color: black;
+            text-align: center;
+        }
+        #rightscorecounter
+        {
+            height: 50px;
+            width: 100px;
+            background-color: rgb(201, 201, 201);
+            display: inline-block;
+            border-radius: 15px;
+            font-size: 40px;
+            font-family: Orbitron;
+            color: black;
+            text-align: center;
+        }
+        #stateindicator
+        {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: red;
+            display: inline-block;
+            position: absolute;
+            top: 530px;
+            left: 960px;
+        }
+    </style>
+    <head>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+        <body>
+            <div class = "circle">
+                <div id = "redbutton"></div>
+                <div id = "yellowbutton"></div>
+                <div id = "greenbutton"></div>
+                <div id = "bluebutton"></div>
+                <div id = "stateindicator"></div>
+
+                <span id = "leftscorecounter">0</span>
+                <span id = "startbutton" onclick="statechange()">Start</span> 
+                <span id = "rightscorecounter">0</span>
+            </div>
+            <script>
+                function statechange()
+                {
+                    document.getElementById("stateindicator").style.backgroundColor = "LawnGreen"; //change status indicator when game starts 
+                }   
+                var flashorder = []; //order of flashes from computer
+                var playerclickorder = []; //order of player input
+                var miss; //check if player got order wrong
+                var computerTurn; //computers turn to flash lights(player cant click button until computer is done flashing)
+                var playerturn = false; //players turn to make lights flash
+                var flashInterval; // time between each computer flash
+                var flash; //number of flashes
+                var currentround; //tracks current round
+                var delay = 800; //length of flash
+                var pulseamount = 5; //amount of times all buttons flash after a miss
+                const maxrounds = 20; //max amount of flashes per game
+                const buttons = 4; // amount of buttons
+                const redbutton = document.querySelector("#redbutton");
+                const greenbutton = document.querySelector("#greenbutton");
+                const yellowbutton = document.querySelector("#yellowbutton");
+                const bluebutton = document.querySelector("#bluebutton");
+                const start = document.querySelector("#startbutton");
+                const rcounter = document.querySelector("#rightscorecounter");
+
+                const ROUND_TIME_SECONDS = 5;
+                const ROUND_TIME_MILLISECS = ROUND_TIME_SECONDS * 1000;
+                
+                start.addEventListener('click', (event) =>{play();});//check if player has clicked to start game
+                function play()
+                {   
+                    flashorder = [];
+                    playerclickorder = [];
+                    flash = 0; //position of first flash at start of game
+                    miss = false;
+                    flashInterval = 0;
+                    currentround = 1;
+                    rcounter.innerHTML = 0;
+                    for( var i = 0; i < maxrounds; i++) //initiates order of flashes for the full game
+                    {
+                        flashorder.push(Math.floor(Math.random() * buttons) + 1);
+                    }
+                    computerTurn = true; //game starts with computer flashing lights 
+                    flashInterval = setInterval(gameTurn, delay); //runs gameTurn function
+                }
+                function gameTurn()
+                {
+                    pulseamount = 5;
+                    playerturn = false; //not the players turn
+                    if(flash == currentround) //if the number of flashes equals the current round, then computer turn is over
+                    {
+                        clearInterval(flashInterval); //stops gameTurn
+                        computerTurn = false;
+                        clearColour();
+                        playerturn = true;
+                        roundTimerControl = setTimeout(timeout, ROUND_TIME_MILLISECS); //starts time for player to click each button
+                    }
+                    
+                    if(computerTurn) //computer turn
+                    {
+                        clearColour();
+                        setTimeout(() => {
+                            if(flashorder[flash] == 1) redflash(); //if first element in array is 1, flash red button
+                            if(flashorder[flash] == 2) greenflash(); //and so on...
+                            if(flashorder[flash] == 3) yellowflash();
+                            if(flashorder[flash] == 4) blueflash();
+                            flash++; //move to next element in array
+                                    //keeps going until amount of flashes equals number of currentround, then becomes players turn
+                        }, 250)
+                    }
+                }
+                function clearColour() //returns button to original colour after a "flash"
+                {
+                    redbutton.style.backgroundColor = "rgb(83, 0, 0)"
+                    greenbutton.style.backgroundColor = "darkgreen"
+                    yellowbutton.style.backgroundColor = "goldenrod"
+                    bluebutton.style.backgroundColor = "darkblue"
+                }
+
+                function redflash() //imititate flash by making colour lighter
+                {
+                    document.getElementById("redbutton").style.backgroundColor = "red"
+                }
+                function greenflash()
+                {
+                    document.getElementById("greenbutton").style.backgroundColor = "lightgreen"
+                }
+                function yellowflash()
+                {
+                    document.getElementById("yellowbutton").style.backgroundColor = "yellow"
+                }
+                function blueflash()
+                {
+                    document.getElementById("bluebutton").style.backgroundColor = "lightskyblue"
+                }
+                roundTimerControl = setTimeout(timeout, ROUND_TIME_MILLISECS);
+                redbutton.addEventListener('click', (event) => {
+                    if(playerturn) //during players turn wait until player has clicked button
+                    {
+                        playerclickorder.push(1); //fill player order array to check if it matches with the actual order
+                        checkForMiss(); //check order method
+                        redflash();
+                        setTimeout(() => {clearColour();}, 250); //revert colour of "flash" after 250ms
+                        clearTimeout(roundTimerControl); //resets round timer after click
+                    }   
+                });
+                greenbutton.addEventListener('click', (event) => {
+                    if(playerturn)
+                    {
+                        playerclickorder.push(2);
+                        checkForMiss();
+                        greenflash();
+                        setTimeout(() => {clearColour();}, 250);
+                        clearTimeout(roundTimerControl);
+                    }   
+                });
+                yellowbutton.addEventListener('click', (event) => {
+                    if(playerturn)
+                    {
+                        playerclickorder.push(3);
+                        checkForMiss();
+                        yellowflash();
+                        setTimeout(() => {clearColour();}, 250);
+                        clearTimeout(roundTimerControl);
+                    }   
+                });
+                bluebutton.addEventListener('click', (event) => {
+                    if(playerturn)
+                    {
+                        playerclickorder.push(4);
+                        checkForMiss();
+                        blueflash();
+                        setTimeout(() => {clearColour();}, 250);
+                        clearTimeout(roundTimerControl);
+                    }   
+                });
+
+                function checkForMiss()
+                {
+                    // if player clicks wrong button
+                    if(playerclickorder[playerclickorder.length - 1] !== flashorder[playerclickorder.length -1])
+                        miss = true;
+
+                    if(miss == true) //reset game on miss
+                    {
+                        pulse(); //flash all buttons 5 times 
+                        statechange2();
+                        pulseamount = 5;
+                    }
+                    
+                    if(playerclickorder.length == 20 && miss == false) //max rounds reached, reset game
+                    {
+                        statechange2();  
+                    }
+                    if(currentround == playerclickorder.length && miss == false) //if player has clicked correct amount of flashes without missing, go to next round
+                    {
+                        currentround++;
+                        if(currentround == 5) delay = delay - 220; //speeds up interval between flashes after x amount of rounds
+                        if(currentround == 9) delay = delay - 220;
+                        if(currentround == 13) delay = delay - 220;
+                        var a = document.getElementById('rightscorecounter').innerHTML; //increment counters
+                        var b = document.getElementById('leftscorecounter').innerHTML;
+                        increment();
+                        if(a >= b) increment2(); //dont increment highest score counter until current score has passed it
+                        playerclickorder = []; //reset player order to make sure player inputs correctly each round
+                        computerTurn = true; //go back to computers turn
+                        flash = 0; //reset amounnt of flashes need so it can produce the correct amount of flashes for next round
+                        flashInterval = setInterval(gameTurn, delay); //call gameTurn method
+                    }
+                }
+                function statechange2() //change status indicator back to red
+                {
+                    document.getElementById("stateindicator").style.backgroundColor = "red";
+                }
+                function increment() //increase scorecount
+                {
+                    var a = document.getElementById('rightscorecounter').innerHTML;
+                    a++;
+                    document.getElementById('rightscorecounter').innerHTML = a;
+                }
+                function increment2()
+                {
+                    var b = document.getElementById('leftscorecounter').innerHTML;
+                    b++;
+                    document.getElementById('leftscorecounter').innerHTML = b;
+                }
+                function pulse() //flash all buttons
+                {
+                    redflash();
+                    blueflash();
+                    yellowflash();
+                    greenflash();
+                    runpulse(); //method to clear the colour after 200ms, then recall this method to flash all buttons again
+                }
+                function runpulse()
+                {
+                    if(pulseamount > 0) //pulses 5 times
+                    {
+                        pulseamount--;
+                        setTimeout(function() 
+                        {
+                            clearColour();
+                        }, 200);
+                        setTimeout(function() 
+                        {
+                            pulse();
+                        }, 400);
+                    }
+                    else
+                    {
+                        clearColour();
+                    }  
+                }
+                function timeout()
+                {
+                    pulse();
+                    statechange2();
+                }
+                </script>
+        </body>
+    </head>
+</html>
